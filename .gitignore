@@ -1,0 +1,21 @@
+# Executables and large binaries
+*.exe
+cloudflared.exe
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+ENV/
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs & temp
+*.log
+scratch/

@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOSync — AI-Assisted Rapid Emergency Response & Dispatch System</title>
+  <meta name="description" content="Next-generation AI emergency response platform that automatically captures incident evidence, detects location, analyzes severity with AI vision, and routes verified reports to first responders.">
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="theme-dark">
+  <!-- Top Navigation & Global Header -->
+  <header class="app-header" id="appHeader">
+    <div class="header-brand">
+      <div class="brand-logo-wrap">
+        <div class="pulse-beacon"></div>
+        <span class="brand-icon">⚡</span>
+      </div>
+      <div class="brand-text">
+        <h1 class="brand-title">SO<span>Sync</span> <span class="badge-live">LIVE SYSTEM</span></h1>
+        <p class="brand-subtitle">AI-Assisted Autonomous Emergency Dispatch Network</p>
+      </div>
+    </div>
+
+    <!-- Active Global Status Indicator -->
+    <div class="header-telemetry">
+      <div class="telemetry-pill" id="networkStatus">
+        <span class="dot-indicator green"></span>
+        <span class="telemetry-label">Network:</span>
+        <span class="telemetry-val">5G / GPS Locked</span>
+      </div>
+      <div class="telemetry-pill" id="activeIncidentsCounter">
+        <span class="dot-indicator red pulse"></span>
+        <span class="telemetry-label">Active SOS:</span>
+        <span class="telemetry-val" id="activeSosCount">2 In-Progress</span>
+      </div>
+      <div class="telemetry-pill" id="systemClockPill" title="Live System Real-Time Clock (24-Hour Format)">
+        <span class="dot-indicator green pulse"></span>
+        <span class="telemetry-label">System Time:</span>
+        <span class="telemetry-val font-mono" id="liveClock">04:32:00</span>
+      </div>
+    </div>
+
+    <!-- Mode Switcher Tabs -->
+    <nav class="header-nav" role="tablist">
+      <button class="nav-tab active" id="tabCitizen" data-view="citizen" role="tab" aria-selected="true">
+        <span class="tab-icon">📱</span>
+        <span class="tab-text">Citizen SOS App</span>
+        <span class="tab-badge" id="citizenAlertBadge" style="display:none;">!</span>
+      </button>
+      <button class="nav-tab" id="tabDispatcher" data-view="dispatcher" role="tab" aria-selected="false">
+        <span class="tab-icon">🚨</span>
+        <span class="tab-text">Command & Dispatch</span>
+        <span class="tab-badge count" id="dispatchAlertBadge">2</span>
+      </button>
+      <button class="nav-tab" id="tabResponder" data-view="responder" role="tab" aria-selected="false">
+        <span class="tab-icon">🚑</span>
+        <span class="tab-text">Responder Vehicle HUD</span>
+      </button>
+      <button class="nav-tab highlight" id="tabWorkflow3d" data-view="workflow3d" role="tab" aria-selected="false">
+        <span class="tab-icon">🔄</span>
+        <span class="tab-text">3D Workflow & Architecture (PPT)</span>
+      </button>
+    </nav>
+
+    <!-- Header Actions -->
+    <div class="header-actions">
+      <button class="btn-icon" id="btnAudioToggle" title="Toggle Siren & Alert Audio" aria-label="Toggle Siren & Alert Audio">
+        <span id="audioIcon">🔊</span>
+      </button>
+      <button class="btn-tactical" id="btnQuickDemo">
+        <span>⚡ Quick Scenario</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Viewport Container -->
+  <main class="main-content" id="mainContainer">
+
+    <!-- ======================================================== -->
+    <!-- VIEW 1: CITIZEN / VICTIM MOBILE SOS INTERFACE             -->
+    <!-- ======================================================== -->
+    <section class="view-panel active" id="viewCitizen">
+      <div class="citizen-layout">
+        
+        <!-- Modern Smartphone Device Mockup Container (Reference Image Hardware) -->
+        <div class="phone-column-wrapper">
+          <!-- Quick Notch Screen Adjuster Controls -->
+          <div class="notch-adjuster-bar" aria-label="Notch Screen Adjuster">
+            <span class="notch-bar-title">Adjust Notch:</span>
+            <div class="notch-btn-group">
+              <button class="btn-notch-adjust active" data-notch="compact" id="btnNotchSlim" title="Adjust to Slim Compact Notch">📱 Slim</button>
+              <button class="btn-notch-adjust" data-notch="island" id="btnNotchIsland" title="Adjust to Dynamic Island Floating Pill">🏝️ Island</button>
+              <button class="btn-notch-adjust" data-notch="hidden" id="btnNotchHide" title="Hide Notch for 100% Full Screen">⬛ Hide Notch</button>
+            </div>
+          </div>
+
+          <div class="phone-frame-wrapper">
+            <!-- Physical Hardware Buttons (Matching Reference Image) -->
+            <div class="phone-btn-mute" aria-hidden="true"></div>
+            <div class="phone-btn-vol-up" aria-hidden="true"></div>
+            <div class="phone-btn-vol-down" aria-hidden="true"></div>
+            <div class="phone-btn-power" aria-hidden="true"></div>
+
+            <!-- Antenna Isolation Bands -->
+            <div class="phone-antenna phone-antenna-tl" aria-hidden="true"></div>
+            <div class="phone-antenna phone-antenna-bl" aria-hidden="true"></div>
+            <div class="phone-antenna phone-antenna-tr" aria-hidden="true"></div>
+            <div class="phone-antenna phone-antenna-br" aria-hidden="true"></div>
+
+            <div class="device-mockup" id="deviceMockup">
+              <!-- Top Center Notch with Speaker Slit & Front Camera (Adjusted & Non-Obstructive) -->
+              <div class="device-notch" id="deviceNotch" aria-hidden="true">
+                <div class="device-speaker"></div>
+                <div class="device-camera"></div>
+              </div>
+
+              <!-- Glass Specular Reflection Overlay -->
+              <div class="device-glass-glare" aria-hidden="true"></div>
+          
+          <!-- Screen Header -->
+          <div class="mobile-status-bar">
+            <button class="mobile-time font-mono" id="mobileClock" title="SOSync Device System Time">04:27</button>
+            <div class="mobile-icons" id="mobileStatusBarIcons">
+              <!-- Interactive 5G Cellular Signal -->
+              <button class="status-pill status-pill-signal" id="statusSignalBtn" title="SOSync 5G Ultra-Wideband (Click for Link telemetry)" aria-label="Signal 5G">
+                <span class="signal-bars">
+                  <span class="bar b1"></span>
+                  <span class="bar b2"></span>
+                  <span class="bar b3"></span>
+                  <span class="bar b4"></span>
+                </span>
+                <span class="signal-type" id="signalTypeText">5G</span>
+              </button>
+
+              <!-- Interactive GPS Fix Indicator -->
+              <button class="status-pill status-pill-gps" id="statusGpsBtn" title="GNSS GPS Fix Locked (Click to inspect coordinates)" aria-label="GPS Status">
+                <span class="gps-radar-wrap">
+                  <svg class="gps-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9"></circle>
+                    <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
+                    <line x1="12" y1="1" x2="12" y2="4"></line>
+                    <line x1="12" y1="20" x2="12" y2="23"></line>
+                    <line x1="1" y1="12" x2="4" y2="12"></line>
+                    <line x1="20" y1="12" x2="23" y2="12"></line>
+                  </svg>
+                  <span class="gps-pulse-ping"></span>
+                </span>
+                <span class="gps-label" id="mobileGpsIndicator">GPS</span>
+              </button>
+
+              <!-- Interactive Battery Indicator -->
+              <button class="status-pill status-pill-battery" id="statusBatteryBtn" title="Battery 92% (Click for power modes)" aria-label="Battery 92%">
+                <span class="battery-capsule">
+                  <span class="battery-level-fill" id="batteryFill" style="width: 92%;"></span>
+                  <span class="battery-bolt" id="batteryBolt">⚡</span>
+                </span>
+                <span class="battery-percent" id="batteryPercentText">92%</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Slide-Down Interactive Telemetry Drawer (Inside Phone Mockup) -->
+          <div class="mobile-telemetry-drawer" id="mobileTelemetryDrawer" aria-hidden="true">
+            <div class="drawer-header">
+              <div class="drawer-notch-handle"></div>
+              <div class="drawer-title-row">
+                <span class="drawer-title">Device Link Telemetry</span>
+                <button class="drawer-close-btn" id="closeTelemetryDrawer" aria-label="Close drawer">✕</button>
+              </div>
+            </div>
+            <div class="drawer-content">
+              <div class="telemetry-card">
+                <div class="tc-icon">📡</div>
+                <div class="tc-info">
+                  <div class="tc-row"><strong>Carrier Network:</strong> <span class="badge-accent" id="drawerNetworkBadge">5G Ultra</span></div>
+                  <small id="drawerNetworkDetail">SOSync Sat-Mesh Priority • 14ms latency</small>
+                </div>
+                <button class="tc-action-btn" id="btnToggleSatellite">Toggle SAT</button>
+              </div>
+
+              <div class="telemetry-card">
+                <div class="tc-icon">🛰️</div>
+                <div class="tc-info">
+                  <div class="tc-row"><strong>GNSS Position:</strong> <span class="badge-success">FIX LOCKED</span></div>
+                  <small id="drawerCoordsText">11.2789° N, 77.6067° E (±1.8m)</small>
+                </div>
+                <button class="tc-action-btn" id="btnRecalibrateGps">Re-scan</button>
+              </div>
+
+              <div class="telemetry-card">
+                <div class="tc-icon">🔋</div>
+                <div class="tc-info">
+                  <div class="tc-row"><strong>Power Level:</strong> <span class="badge-success" id="drawerBatteryBadge">92% Optimal</span></div>
+                  <small id="drawerBatteryRemaining">14h 25m • Low-Power Beacon: Ready</small>
+                </div>
+                <button class="tc-action-btn" id="btnTogglePowerMode">Saver</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Floating Mini Toast inside Mobile Screen -->
+          <div class="mobile-toast" id="mobileToast" aria-live="polite"></div>
+
+          <!-- Screen Content Area -->
+          <div class="mobile-screen" id="mobileScreenContent">
+            
+            <!-- STATE A: IDLE / READY FOR SOS ACTIVATION -->
+            <div class="screen-state state-idle active" id="citizenStateIdle">
+              <div class="idle-header">
+                <div class="shield-badge">
+                  <span class="shield-icon">🛡️</span>
+                  <span>AI EMERGENCY GUARDIAN ACTIVE</span>
+                </div>
+                <h2 class="idle-title">Need Urgent Help?</h2>
+                <p class="idle-desc">Tap the SOS button to instantly capture evidence, obtain GPS location, analyze the scene with AI, and dispatch first responders.</p>
+              </div>
+
+              <!-- Main Big SOS Button with Glowing Rings -->
+              <div class="sos-trigger-zone">
+                <div class="sos-ring-outer"></div>
+                <div class="sos-ring-middle"></div>
+                <button class="btn-sos-main" id="btnTriggerSos" aria-label="Emergency SOS Button">
+                  <span class="sos-icon">🆘</span>
+                  <span class="sos-text">SOS</span>
+                  <span class="sos-subtext">TAP OR SHAKE</span>
+                </button>
+              </div>
+
+              <!-- Shake-to-SOS Hardware Accelerometer Bar -->
+              <div class="mobile-shake-bar" id="mobileShakeBar">
+                <div class="shake-bar-header">
+                  <div class="shake-status-left">
+                    <span class="shake-icon-pulse">📳</span>
+                    <div class="shake-text-wrap">
+                      <strong>Shake-to-SOS: ACTIVE</strong>
+                      <span id="shakeHintText">Shake mobile 3 times rapidly to activate</span>
+                    </div>
+                  </div>
+                  <button class="btn-simulate-shake" id="btnSimulateShake" type="button" title="Test shake sensor on desktop">Simulate Shake</button>
+                </div>
+                <div class="shake-meter-track">
+                  <div class="shake-meter-fill" id="shakeMeterFill"></div>
+                </div>
+              </div>
+
+              <!-- Quick Incident Shortcuts (Optional direct 1-tap) -->
+              <div class="quick-types-section">
+                <span class="section-label">Or Tap Specific Incident:</span>
+                <div class="quick-type-grid">
+                  <button class="quick-chip" data-preset="accident">
+                    <span class="chip-model-3d"><img src="assets/models/model-accident.jpg" alt="3D Crash"></span>
+                    <span class="chip-title">Road Accident</span>
+                  </button>
+                  <button class="quick-chip" data-preset="fire">
+                    <span class="chip-model-3d"><img src="assets/models/model-fire.jpg" alt="3D Fire"></span>
+                    <span class="chip-title">Fire Emergency</span>
+                  </button>
+                  <button class="quick-chip" data-preset="medical">
+                    <span class="chip-model-3d"><img src="assets/models/model-medical.jpg" alt="3D Cardiac"></span>
+                    <span class="chip-title">Medical / Cardiac</span>
+                  </button>
+                  <button class="quick-chip" data-preset="crime">
+                    <span class="chip-model-3d"><img src="assets/models/model-crime.jpg" alt="3D Siren"></span>
+                    <span class="chip-title">Crime / Threat</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Location Preview Badge -->
+              <div class="geo-preview-card">
+                <div class="geo-icon">📍</div>
+                <div class="geo-info">
+                  <span class="geo-title">Current Detected Location</span>
+                  <span class="geo-address font-mono" id="idleAddressText">Erode Sengunthar Engineering College (ESEC), Perundurai Rd, Erode</span>
+                  <span class="geo-coords font-mono" id="idleCoordsText">Lat: 11.2742° N, Long: 77.5826° E (±3m)</span>
+                </div>
+                <button class="btn-refresh-gps" id="btnRefreshGps" title="Track Live GPS Location like Google Maps">⌖</button>
+              </div>
+
+              <!-- Quick Google Maps GPS Location Action Row -->
+              <div class="mobile-loc-actions">
+                <button class="btn-mobile-gps-track" id="btnMobileTrackGps" title="Detect live GPS coordinates and street address">
+                  <span class="m-loc-icon">⌖</span>
+                  <span>Track My Live GPS</span>
+                </button>
+                <button class="btn-mobile-pick-loc" id="btnMobilePickLoc" title="Open interactive map to drag and drop pin">
+                  <span>🗺️ Pin on Live Map</span>
+                </button>
+              </div>
+
+              <!-- Quick Landmark Location Chips -->
+              <div class="mobile-quick-locations">
+                <span class="m-quick-title">Quick:</span>
+                <button class="m-quick-chip active" data-lat="11.2742" data-lng="77.5826" data-name="Erode Sengunthar Engineering College (ESEC), Perundurai Rd, Thindal, Erode, Tamil Nadu 638057">🏫 ESEC Campus</button>
+                <button class="m-quick-chip" data-lat="11.3410" data-lng="77.7172" data-name="Erode Junction &amp; Central Bus Terminal, Erode, Tamil Nadu 638001">🚂 Erode</button>
+                <button class="m-quick-chip" data-lat="11.0168" data-lng="76.9558" data-name="Gandhipuram Central Terminal &amp; Cross Cut Rd, Coimbatore, Tamil Nadu 641012">📍 Coimbatore</button>
+              </div>
+            </div>
+
+            <!-- STATE B: COUNTDOWN & RAPID EVIDENCE CAPTURE (5 PHOTOS IN ~5 SECONDS) -->
+            <div class="screen-state state-capture" id="citizenStateCapture" style="display:none;">
+              <div class="capture-header">
+                <div class="emergency-blinker">
+                  <span class="blink-dot"></span>
+                  <span class="blink-text">EMERGENCY PROTOCOL ACTIVATED</span>
+                </div>
+                <div class="capture-counter-badge">
+                  <span id="captureStepText">Capturing Photo 1 of 5</span>
+                  <span class="timer-countdown font-mono" id="captureTimer">4.8s</span>
+                </div>
+              </div>
+
+              <!-- Live Emergency Audio Stream & Frequency Waveform -->
+              <div class="mobile-mic-live-banner" id="mobileMicLiveBanner">
+                <div class="mic-status-row">
+                  <div class="mic-indicator">
+                    <span class="mic-dot-pulse"></span>
+                    <span class="mic-label font-mono">🎙️ LIVE MICROPHONE ACTIVE</span>
+                  </div>
+                  <span class="mic-decibel-badge font-mono" id="micDecibelBadge">64 dB</span>
+                </div>
+                <canvas id="micWaveformCanvas" class="mic-waveform-canvas" width="320" height="34"></canvas>
+                <div class="mic-stream-footer font-mono">
+                  <span>Audio Stream: 44.1 kHz PCM • Transmitting live to 108 Dispatch HQ</span>
+                </div>
+              </div>
+
+              <!-- Camera Viewfinder / Simulation Feed -->
+              <div class="viewfinder-container">
+                <video id="webcamElement" autoplay playsinline muted style="display:none;"></video>
+                <canvas id="viewfinderCanvas" width="640" height="480"></canvas>
+                
+                <!-- Viewfinder HUD Overlays -->
+                <div class="viewfinder-hud">
+                  <div class="hud-top">
+                    <span class="hud-rec font-mono"><span class="rec-dot"></span> AUTO BURST REC</span>
+                    <span class="hud-fps font-mono">30 FPS | 1080P</span>
+                  </div>
+                  <div class="hud-crosshair"></div>
+                  <div class="hud-bottom">
+                    <span class="hud-geo font-mono" id="hudGeoText">GPS: Acquiring high-precision fix...</span>
+                    <span class="hud-time font-mono" id="hudTimeText">2026-09-30 04:27:34</span>
+                  </div>
+                </div>
+
+                <!-- Burst Flash Overlay -->
+                <div class="camera-flash" id="cameraFlashOverlay"></div>
+              </div>
+
+              <!-- Captured 5 Thumbnails Strip -->
+              <div class="burst-thumbnails-container">
+                <div class="burst-label">Captured Incident Frames:</div>
+                <div class="burst-filmstrip" id="burstFilmstrip">
+                  <div class="burst-thumb-slot" id="thumbSlot1"><span class="slot-num">1</span></div>
+                  <div class="burst-thumb-slot" id="thumbSlot2"><span class="slot-num">2</span></div>
+                  <div class="burst-thumb-slot" id="thumbSlot3"><span class="slot-num">3</span></div>
+                  <div class="burst-thumb-slot" id="thumbSlot4"><span class="slot-num">4</span></div>
+                  <div class="burst-thumb-slot" id="thumbSlot5"><span class="slot-num">5</span></div>
+                </div>
+              </div>
+
+              <!-- Progress Bar -->
+              <div class="capture-progress-bar">
+                <div class="progress-fill" id="captureProgressBar"></div>
+              </div>
+
+              <div class="capture-footer-hint">
+                <span>Hold phone pointed at the scene. Audio & sensor telemetry also streaming.</span>
+              </div>
+            </div>
+
+            <!-- STATE C: AI ANALYSIS & INSTANT VERIFICATION -->
+            <div class="screen-state state-verify" id="citizenStateVerify" style="display:none;">
+              <div class="ai-processing-header" id="aiProcessingAnim">
+                <div class="ai-brain-pulse">🤖</div>
+                <div class="ai-thinking-text">
+                  <h3>Analyzing Incident Evidence...</h3>
+                  <p>Florence-2 & YOLOv10 Multi-Modal Vision processing 5 frames...</p>
+                </div>
+              </div>
+
+              <!-- AI Verdict Card -->
+              <div class="ai-result-card" id="aiResultCard" style="display:none;">
+                <div class="verdict-banner">
+                  <div class="verdict-icon" id="verdictIcon">🚗💥</div>
+                  <div class="verdict-details">
+                    <span class="verdict-confidence" id="verdictConfidence">AI Confidence: 96.4%</span>
+                    <h3 class="verdict-type" id="verdictType">Severe Road Accident</h3>
+                  </div>
+                  <span class="priority-tag code-red" id="verdictPriority">CODE RED</span>
+                </div>
+
+                <!-- Detected Objects & Scene Clues -->
+                <div class="detected-tags-list" id="detectedTagsList">
+                  <span class="tag-pill">2 Vehicles Damaged</span>
+                  <span class="tag-pill">Smoke / Fluid Leak</span>
+                  <span class="tag-pill">Persons Injured (2)</span>
+                  <span class="tag-pill">Lane Obstructed</span>
+                </div>
+
+                <!-- Fail-safe countdown banner -->
+                <div class="failsafe-timer-banner">
+                  <div class="failsafe-clock">
+                    <span class="clock-label">Auto-confirming in:</span>
+                    <span class="clock-seconds font-mono" id="failsafeCountdown">10s</span>
+                  </div>
+                </div>
+
+                <!-- Live Audio Streaming Telemetry Pill -->
+                <div class="mic-active-pill" id="verifyMicBadge">
+                  <span class="mic-dot-pulse"></span>
+                  <span class="font-mono">🎙️ Ambient Scene Audio Streaming Live to 108 Dispatch (<span id="verifyMicDecibel">68 dB</span>)</span>
+                </div>
+
+                <!-- Verification Action Buttons -->
+                <div class="verify-actions">
+                  <button class="btn-verify-confirm" id="btnConfirmVerdict">
+                    <span class="btn-icon">✅</span>
+                    <span class="btn-text">Confirm Incident & Dispatch</span>
+                  </button>
+                  <button class="btn-verify-modify" id="btnModifyVerdict">
+                    <span class="btn-icon">✏️</span>
+                    <span class="btn-text">Correct Category</span>
+                  </button>
+                </div>
+
+                <!-- Dropdown for Category Correction (hidden by default) -->
+                <div class="category-correction-box" id="categoryCorrectionBox" style="display:none;">
+                  <span class="box-label">Select Correct Emergency Category:</span>
+                  <div class="correction-options">
+                    <button class="opt-btn" data-cat="accident">🚗 Traffic / Vehicle Crash</button>
+                    <button class="opt-btn" data-cat="fire">🔥 Fire / Explosion</button>
+                    <button class="opt-btn" data-cat="medical">❤️‍🩹 Medical / Cardiac Collapse</button>
+                    <button class="opt-btn" data-cat="crime">🚨 Assault / Robbery / Crime</button>
+                    <button class="opt-btn" data-cat="disaster">🌊 Flood / Building Collapse</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STATE D: REPORT GENERATED & DISPATCH TRANSMITTED -->
+            <div class="screen-state state-dispatched" id="citizenStateDispatched" style="display:none;">
+              <div class="dispatched-header">
+                <div class="success-ring">
+                  <span>✓</span>
+                </div>
+                <h2>Report Transmitted to Responders!</h2>
+                <p>Help is en route to your exact location. Keep calm and stay in a safe position.</p>
+              </div>
+
+              <!-- Report Summary Card -->
+              <div class="transmitted-report-card">
+                <div class="report-row">
+                  <span class="row-label">Incident ID:</span>
+                  <span class="row-val font-mono" id="reportIncidentId">EMERG-2026-9041</span>
+                </div>
+                <div class="report-row">
+                  <span class="row-label">Routed To:</span>
+                  <span class="row-val highlight-val" id="reportRoutedAgencies">🚑 Ambulance (108) + 🚓 Police (100)</span>
+                </div>
+                <div class="report-row">
+                  <span class="row-label">Closest Unit:</span>
+                  <span class="row-val" id="reportAssignedUnit">Ambulance Unit BL-04 (1.8 km away)</span>
+                </div>
+                <div class="report-row">
+                 <span class="row-label">Estimated Arrival:</span>
+                  <span class="row-val font-mono timer-highlight" id="reportEtaVal">3 mins 40 secs</span>
+                </div>
+                <div class="report-row">
+                  <span class="row-label">Verified Location:</span>
+                  <span class="row-val font-mono" id="reportLocationText">ESEC Campus, Perundurai Rd, Erode (11.2742° N, 77.5826° E)</span>
+                </div>
+              </div>
+
+              <!-- 1-Tap Direct Emergency Call Hotlines for Citizen -->
+              <div class="citizen-quick-call-bar" id="citizenQuickCallBar">
+                <div class="quick-call-heading">
+                  <span class="pulse-call-dot"></span>
+                  <span>1-Tap Emergency Hotlines (Direct Dispatch):</span>
+                </div>
+                <div class="call-buttons-grid">
+                  <a href="tel:108" class="btn-direct-call call-amb" id="btnCitizenCall108" title="Direct Line to 108 Emergency Ambulance">
+                    <span class="call-ico">🚑</span>
+                    <span class="call-meta">
+                      <strong>Call 108 Ambulance</strong>
+                      <small>Trauma Unit BL-04 En Route</small>
+                    </span>
+                  </a>
+                  <a href="tel:108" class="btn-direct-call call-hosp" id="btnCitizenCallHosp" title="Direct Line to Nearest Hospital Emergency ICU">
+                    <span class="call-ico">🏥</span>
+                    <span class="call-meta">
+                      <strong>Call Hospital ICU</strong>
+                      <small id="citizenHospShortName">Medical College Hospital</small>
+                    </span>
+                  </a>
+                  <a href="tel:100" class="btn-direct-call call-police" id="btnCitizenCallPolice" title="Direct Line to 100 Police Highway Patrol">
+                    <span class="call-ico">🚓</span>
+                    <span class="call-meta">
+                      <strong>Call 100 Police</strong>
+                      <small>Highway Patrol PB-12</small>
+                    </span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- Live First Aid / Triage Advice based on Incident -->
+              <div class="first-aid-banner" id="firstAidBanner">
+                <div class="aid-header">
+                  <span class="aid-icon">💡</span>
+                  <span class="aid-title">Instant AI First-Aid Advice</span>
+                </div>
+                <ul class="aid-tips-list" id="aidTipsList">
+                  <li>Do NOT attempt to move spinal trauma victims unless immediate fire hazard exists.</li>
+                  <li>Turn off vehicle ignition if accessible to prevent fuel spark ignition.</li>
+                  <li>Ambulance team has your live camera feed and is preparing trauma equipment.</li>
+                </ul>
+              </div>
+
+              <div class="dispatched-actions">
+                <button class="btn-cancel-incident" id="btnCitizenReset">
+                  <span>New Emergency / Reset Demo</span>
+                </button>
+                <button class="btn-view-docket" id="btnViewDispatcherDirect">
+                  <span>View in Command Center →</span>
+                </button>
+              </div>
+            </div>
+
+          </div><!-- /mobile-screen -->
+
+          <div class="device-home-bar" aria-hidden="true"></div>
+        </div><!-- /device-mockup -->
+      </div><!-- /phone-frame-wrapper -->
+    </div><!-- /phone-column-wrapper -->
+
+        <!-- Side Companion Panel with Simulation Controls & Guide -->
+        <aside class="citizen-companion-sidebar">
+          <div class="companion-card">
+            <div class="card-badge">DEMO WORKBENCH</div>
+            <h3>Test Scenarios & Camera Mode</h3>
+            <p class="card-desc">Simulate realistic accident conditions or use your device's actual webcam to test the burst photo pipeline.</p>
+            
+            <div class="form-group">
+              <label for="cameraModeSelect">Camera Source:</label>
+              <select id="cameraModeSelect" class="form-select">
+                <option value="webcam" selected>📷 Live Device Camera (Real Hardware Sensor)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="scenario-label-intel">
+                <span class="label-intel-text">Intelligent Emergency Scenarios</span>
+                <span class="badge-intel-pill">AI POWERED</span>
+              </label>
+              <div class="scenario-buttons">
+                <button class="scenario-btn active" data-scenario="accident" id="scenarioBtnAccident" title="Select Intelligent Highway Collision 3D Scenario">
+                  <div class="s-model-3d-box">
+                    <div class="s-model-3d-inner">
+                      <img src="assets/models/model-accident.jpg" alt="3D Model Intelligent Highway Collision" class="s-model-img">
+                      <span class="badge-3d">3D</span>
+                    </div>
+                  </div>
+                  <div class="s-info">
+                    <div class="s-info-head">
+                      <strong>Intelligent Highway Collision</strong>
+                      <span class="s-tag tag-traffic">CODE 3</span>
+                    </div>
+                    <small>2 vehicles, fuel rupture, intelligent extrication triage</small>
+                    <div class="s-intel-meta">
+                      <span class="intel-chip">🧠 Vision AI 98.7%</span>
+                      <span class="intel-chip">⚡ Auto Triage</span>
+                    </div>
+                  </div>
+                </button>
+
+                <button class="scenario-btn" data-scenario="fire" id="scenarioBtnFire" title="Select Intelligent Structure Fire 3D Scenario">
+                  <div class="s-model-3d-box">
+                    <div class="s-model-3d-inner">
+                      <img src="assets/models/model-fire.jpg" alt="3D Model Intelligent Structure Fire" class="s-model-img">
+                      <span class="badge-3d">3D</span>
+                    </div>
+                  </div>
+                  <div class="s-info">
+                    <div class="s-info-head">
+                      <strong>Intelligent Structure Fire</strong>
+                      <span class="s-tag tag-fire">4-ALARM</span>
+                    </div>
+                    <small>Volumetric smoke, trapped victims, thermal AI detection</small>
+                    <div class="s-intel-meta">
+                      <span class="intel-chip">🔥 Thermal AI 99.2%</span>
+                      <span class="intel-chip">🏢 4-Alarm</span>
+                    </div>
+                  </div>
+                </button>
+
+                <button class="scenario-btn" data-scenario="medical" id="scenarioBtnMedical" title="Select Intelligent Cardiac Arrest 3D Scenario">
+                  <div class="s-model-3d-box">
+                    <div class="s-model-3d-inner">
+                      <img src="assets/models/model-medical.jpg" alt="3D Model Intelligent Cardiac Arrest" class="s-model-img">
+                      <span class="badge-3d">3D</span>
+                    </div>
+                  </div>
+                  <div class="s-info">
+                    <div class="s-info-head">
+                      <strong>Intelligent Cardiac Arrest</strong>
+                      <span class="s-tag tag-medical">EMS STAT</span>
+                    </div>
+                    <small>Unresponsive patient, intelligent AED & CPR guidance</small>
+                    <div class="s-intel-meta">
+                      <span class="intel-chip">🫀 Biometric AI 97.9%</span>
+                      <span class="intel-chip">⏱️ Golden Window</span>
+                    </div>
+                  </div>
+                </button>
+
+                <button class="scenario-btn" data-scenario="crime" id="scenarioBtnCrime" title="Select Intelligent Threat Detection 3D Scenario">
+                  <div class="s-model-3d-box">
+                    <div class="s-model-3d-inner">
+                      <img src="assets/models/model-crime.jpg" alt="3D Model Intelligent Threat Detection" class="s-model-img">
+                      <span class="badge-3d">3D</span>
+                    </div>
+                  </div>
+                  <div class="s-info">
+                    <div class="s-info-head">
+                      <strong>Intelligent Threat Detection</strong>
+                      <span class="s-tag tag-police">PRIORITY 1</span>
+                    </div>
+                    <small>Weapon detected, tactical threat perimeter dispatch</small>
+                    <div class="s-intel-meta">
+                      <span class="intel-chip">🚨 Tactical AI 96.5%</span>
+                      <span class="intel-chip">🛡️ Code Blue</span>
+                    </div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <div class="companion-divider"></div>
+
+            <div class="simulation-metric-box">
+              <h4>System Response Benchmark</h4>
+              <div class="metric-row">
+                <span>Activation to Evidence:</span>
+                <strong>4.9 seconds</strong>
+              </div>
+              <div class="metric-row">
+                <span>AI Vision Inference:</span>
+                <strong>420 milliseconds</strong>
+              </div>
+              <div class="metric-row">
+                <span>Report Dispatch Latency:</span>
+                <strong>1.2 seconds</strong>
+              </div>
+              <div class="metric-row">
+                <span>Total Response Savings:</span>
+                <strong class="highlight-green">~4.5 minutes faster</strong>
+              </div>
+            </div>
+
+            <div class="companion-footer">
+              <button class="btn-fire-test-btn" id="btnCompanionTrigger">
+                <span>⚡ Simulate One-Touch SOS Now</span>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 2: COMMAND & DISPATCH CENTER DASHBOARD               -->
+    <!-- ======================================================== -->
+    <section class="view-panel" id="viewDispatcher" style="display:none;">
+      <div class="dispatch-dashboard-grid">
+        
+        <!-- Column 1: Live Emergency Incident Queue -->
+        <div class="dispatch-col col-queue">
+          <div class="panel-header">
+            <div class="header-left">
+              <h3>🚨 Active Incident Queue</h3>
+              <span class="count-pill" id="queueTotalCount">3 Active</span>
+            </div>
+            <div class="filter-toggles">
+              <button class="filter-btn active" data-filter="all">All</button>
+              <button class="filter-btn" data-filter="red">Code Red</button>
+              <button class="filter-btn" data-filter="medical">Medical</button>
+            </div>
+          </div>
+
+          <!-- Incidents List -->
+          <div class="incident-card-list" id="incidentQueueList">
+            <!-- Dynamically populated by JS -->
+          </div>
+        </div>
+
+        <!-- Column 2: Central Tactical Map & Real-time Tracking -->
+        <div class="dispatch-col col-map">
+          <div class="panel-header">
+            <div class="header-left">
+              <h3>🗺️ Tactical Incident Map & Responder Positioning</h3>
+            </div>
+            <div class="map-controls">
+              <button class="map-btn" id="btnLayerStreet">🗺️ Streets</button>
+              <button class="map-btn active" id="btnLayerSatellite">🛰️ Satellite</button>
+              <button class="map-btn" id="btnDetectRealGps">📍 Real GPS</button>
+              <button class="map-btn" id="btnRecenterMap">🎯 Center</button>
+              <button class="map-btn" id="btnSimulateMovement">🚗 Move Units</button>
+            </div>
+          </div>
+
+          <!-- Google Maps-style Live Search & Quick Location Selector -->
+          <div class="gmap-tracking-bar">
+            <div class="gmap-search-row">
+              <div class="gmap-search-box">
+                <span class="gmap-search-icon">🔍</span>
+                <input type="text" id="gmapSearchInput" placeholder="Search exact address, college, landmark, or city (e.g. ESEC, Erode, Chennai)..." autocomplete="off" />
+                <button class="gmap-search-btn" id="gmapSearchBtn">Locate Pin</button>
+              </div>
+              <button class="gmap-live-track-btn" id="gmapTrackLiveGpsBtn" title="Track Live GPS Location like Google Maps">
+                <span class="crosshair-icon">⌖</span>
+                <span>Track My Exact GPS</span>
+              </button>
+            </div>
+            <div class="gmap-quick-bar">
+              <span class="quick-bar-label">📍 Quick Locations:</span>
+              <button class="quick-loc-chip active" data-lat="11.2742" data-lng="77.5826" data-name="Erode Sengunthar Engineering College (ESEC), Perundurai Rd, Erode">🏫 ESEC Campus, Erode</button>
+              <button class="quick-loc-chip" data-lat="11.3410" data-lng="77.7172" data-name="Erode Central Railway Station &amp; Bus Terminal, Erode">🚂 Erode Central</button>
+              <button class="quick-loc-chip" data-lat="11.0168" data-lng="76.9558" data-name="Gandhipuram Bus Stand &amp; Cross Cut Rd, Coimbatore">📍 Coimbatore</button>
+              <button class="quick-loc-chip" data-lat="13.0827" data-lng="80.2707" data-name="Central Railway Station &amp; Anna Salai, Chennai">📍 Chennai</button>
+              <button class="quick-loc-chip" data-lat="12.9716" data-lng="77.5946" data-name="MG Road &amp; Brigade Road Junction, Bengaluru">📍 Bangalore</button>
+            </div>
+            <div class="gmap-instructions-strip" id="gmapPinInstructionStrip">
+              <div class="pin-instruction-info">
+                <span>💡 <strong>Google Maps Precision:</strong> Click anywhere on the map or drag the 🚨 marker to pin the exact accident location.</span>
+                <span class="current-pinned-badge" id="currentPinnedLocationBadge">📍 Pinned: ESEC Campus, Erode</span>
+              </div>
+              <button class="btn-confirm-pinned-loc" id="btnConfirmPinnedLocation" title="Confirm this pinned location and return to Citizen SOS">
+                ✅ Confirm &amp; Return to SOS
+              </button>
+            </div>
+          </div>
+
+          <!-- Google Maps-Style Live GPS Telemetry Monitor Bar -->
+          <div class="gmap-gps-monitor-hud" id="gmapGpsMonitorHud">
+            <div class="monitor-cell cell-status">
+              <span class="radar-dot pulse-emerald"></span>
+              <div class="cell-data">
+                <span class="cell-label">GPS TELEMETRY MONITOR</span>
+                <span class="cell-val highlight-emerald" id="gpsMonitorStatus">ACTIVE RTK SAT-LOCK (12 SATS)</span>
+              </div>
+            </div>
+            <div class="monitor-cell cell-coords">
+              <span class="cell-icon">🌐</span>
+              <div class="cell-data">
+                <span class="cell-label">MONITORED COORDINATES</span>
+                <span class="cell-val font-mono" id="gpsMonitorCoords">11.2742° N, 77.5826° E</span>
+              </div>
+            </div>
+            <div class="monitor-cell cell-accuracy">
+              <span class="cell-icon">🎯</span>
+              <div class="cell-data">
+                <span class="cell-label">PRECISION ACCURACY</span>
+                <span class="cell-val font-mono" id="gpsMonitorAccuracy">±3.0m (High GNSS Fix)</span>
+              </div>
+            </div>
+            <div class="monitor-cell cell-motion">
+              <span class="cell-icon">🧭</span>
+              <div class="cell-data">
+                <span class="cell-label">MOTION &amp; BEARING</span>
+                <span class="cell-val font-mono" id="gpsMonitorSpeedHeading">0 km/h • 42° NE Heading</span>
+              </div>
+            </div>
+            <div class="monitor-cell cell-area">
+              <span class="cell-icon">📍</span>
+              <div class="cell-data">
+                <span class="cell-label">ACTIVE MONITORED AREA</span>
+                <span class="cell-val" id="gpsMonitorArea">ESEC Campus &amp; Perundurai Rd, Erode</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real Interactive Leaflet GIS Map -->
+          <div class="tactical-map-container" id="tacticalMapContainer">
+            <div id="realTacticalMap" class="real-leaflet-map"></div>
+            
+            <!-- Map HUD Overlay -->
+            <div class="map-hud-overlay">
+              <div class="map-legend">
+                <span class="legend-item"><span class="legend-dot red pulse"></span> 🚨 SOS Scene</span>
+                <span class="legend-item"><span class="legend-dot purple"></span> 👥 Victims / People</span>
+                <span class="legend-item"><span class="legend-dot cyan"></span> 🏃 Civilian Responder</span>
+                <span class="legend-item"><span class="legend-dot green"></span> 🚑 Ambulance (108)</span>
+                <span class="legend-item"><span class="legend-dot hosp-cross"></span> 🏥 Hospital</span>
+                <span class="legend-item"><span class="legend-dot blue"></span> 🚓 Police Patrol</span>
+                <span class="legend-item"><span class="legend-dot orange"></span> 🚒 Fire Engine</span>
+              </div>
+              <div class="map-zoom-buttons">
+                <button class="zoom-btn" id="btnZoomIn">+</button>
+                <button class="zoom-btn" id="btnZoomOut">−</button>
+              </div>
+            </div>
+
+            <!-- Route ETA Floating Card -->
+            <div class="route-eta-floating-card" id="routeEtaCard">
+              <div class="eta-icon">🚑</div>
+              <div class="eta-content">
+                <span class="eta-unit">Ambulance Unit BL-04</span>
+                <span class="eta-time font-mono" id="floatingEtaText">ETA: 3m 40s (1.8 km)</span>
+                <span class="eta-status">Priority Siren Active | Route Clear</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fleet Status Strip -->
+          <div class="fleet-status-strip">
+            <div class="fleet-stat">
+              <span class="f-num">14</span>
+              <span class="f-label">Total Units</span>
+            </div>
+            <div class="fleet-stat highlight">
+              <span class="f-num">3</span>
+              <span class="f-label">Dispatched</span>
+            </div>
+            <div class="fleet-stat">
+              <span class="f-num">11</span>
+              <span class="f-label">Available</span>
+            </div>
+            <div class="fleet-stat">
+              <span class="f-num font-mono">3.4 min</span>
+              <span class="f-label">Avg Response ETA</span>
+            </div>
+          </div>
+
+          <!-- Nearby Emergency Facilities & 1-Tap Hotlines Hub -->
+          <div class="nearby-emergency-hub" id="nearbyEmergencyHub">
+            <div class="hub-header">
+              <div class="hub-title-row">
+                <span class="hub-badge-pulse"></span>
+                <h4 class="hub-title">🚨 Very Nearby Emergency Facilities &amp; Priority Call Network</h4>
+              </div>
+              <span class="hub-subtitle">AI Incident Verified — Direct Line Connect with 1-Tap Calling</span>
+            </div>
+
+            <div class="emergency-facilities-grid">
+              <!-- 1. 108 Emergency Ambulance -->
+              <div class="emergency-facility-card amb-card" id="facAmbCard">
+                <div class="fac-top">
+                  <div class="fac-agency-info">
+                    <span class="fac-badge amb">108 EMERGENCY AMBULANCE</span>
+                    <h5 class="fac-name" id="facAmbName">108 GVK-EMRI Trauma Care ALS-04</h5>
+                    <div class="fac-specs font-mono">Advanced Life Support • Oxygen + Defibrillator</div>
+                  </div>
+                  <div class="fac-eta-badge" id="facAmbEtaBadge">
+                    <span class="eta-clock">⚡ 3m 40s</span>
+                    <span class="eta-dist font-mono">1.8 km away</span>
+                  </div>
+                </div>
+                <div class="fac-status-bar">
+                  <span class="dot-indicator green pulse"></span>
+                  <span class="status-txt" id="facAmbStatus">Dispatched &amp; En Route • Route Pre-Empted</span>
+                </div>
+                <div class="fac-actions">
+                  <a href="tel:108" class="btn-emergency-call btn-call-amb" id="btnCall108Amb" title="Call 108 Emergency Ambulance">
+                    <span class="call-ico">📞</span>
+                    <span>Call 108 Ambulance</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- 2. Nearest Hospital Level-1 Trauma Care -->
+              <div class="emergency-facility-card hosp-card" id="facHospCard">
+                <div class="fac-top">
+                  <div class="fac-agency-info">
+                    <span class="fac-badge hosp">LEVEL-1 TRAUMA ICU HOSPITAL</span>
+                    <h5 class="fac-name" id="facHospName">Govt Medical College Hospital &amp; Trauma Centre</h5>
+                    <div class="fac-specs font-mono" id="facHospIcu">14 Emergency ICU Beds Available • Neuro/Ortho STAT</div>
+                  </div>
+                  <div class="fac-eta-badge" id="facHospDistBadge">
+                    <span class="eta-clock" id="facHospDriveTime">🚗 6 min</span>
+                    <span class="eta-dist font-mono" id="facHospDist">4.2 km away</span>
+                  </div>
+                </div>
+                <div class="fac-status-bar">
+                  <span class="dot-indicator blue pulse"></span>
+                  <span class="status-txt" id="facHospStatus">Trauma ER Alerted • Pre-Arrival Vitals Linked</span>
+                </div>
+                <div class="fac-actions">
+                  <a href="tel:108" class="btn-emergency-call btn-call-hosp" id="btnCallHospital" title="Direct Emergency Call to Hospital Trauma Room">
+                    <span class="call-ico">🏥</span>
+                    <span>Call Hospital ICU</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- 3. Nearest Police Patrol (100) -->
+              <div class="emergency-facility-card police-card" id="facPoliceCard">
+                <div class="fac-top">
+                  <div class="fac-agency-info">
+                    <span class="fac-badge police">POLICE PATROL (DIAL 100)</span>
+                    <h5 class="fac-name" id="facPoliceName">Thindal Police Outpost &amp; Highway Patrol PB-12</h5>
+                    <div class="fac-specs font-mono">Sector Highway Interceptor • Rapid Scene Quarantine</div>
+                  </div>
+                  <div class="fac-eta-badge" id="facPoliceEtaBadge">
+                    <span class="eta-clock">⚡ 2m 10s</span>
+                    <span class="eta-dist font-mono" id="facPoliceDist">1.1 km away</span>
+                  </div>
+                </div>
+                <div class="fac-status-bar">
+                  <span class="dot-indicator green pulse"></span>
+                  <span class="status-txt">En Route • Road Clearance Protocol Active</span>
+                </div>
+                <div class="fac-actions">
+                  <a href="tel:100" class="btn-emergency-call btn-call-police" id="btnCallPolice" title="Direct Emergency Call to Police (100)">
+                    <span class="call-ico">🚓</span>
+                    <span>Call 100 Police</span>
+                  </a>
+                </div>
+              </div>
+
+              <!-- 4. Nearest Fire & Rescue (101) -->
+              <div class="emergency-facility-card fire-card" id="facFireCard">
+                <div class="fac-top">
+                  <div class="fac-agency-info">
+                    <span class="fac-badge fire">FIRE &amp; RESCUE (DIAL 101)</span>
+                    <h5 class="fac-name" id="facFireName">Erode Fire &amp; Rescue Services Station 03</h5>
+                    <div class="fac-specs font-mono">Hydraulic Extrication Cutter &amp; Foam Tender FT-03</div>
+                  </div>
+                  <div class="fac-eta-badge" id="facFireEtaBadge">
+                    <span class="eta-clock">⚡ 5m 50s</span>
+                    <span class="eta-dist font-mono" id="facFireDist">3.4 km away</span>
+                  </div>
+                </div>
+                <div class="fac-status-bar">
+                  <span class="dot-indicator orange pulse"></span>
+                  <span class="status-txt">Standby / Extrication Crew Primed</span>
+                </div>
+                <div class="fac-actions">
+                  <a href="tel:101" class="btn-emergency-call btn-call-fire" id="btnCallFire" title="Direct Emergency Call to Fire & Rescue (101)">
+                    <span class="call-ico">🚒</span>
+                    <span>Call 101 Fire</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 3: Detailed Incident Inspection & Evidence Dossier -->
+        <div class="dispatch-col col-details">
+          <div class="panel-header">
+            <div class="header-left">
+              <h3>📋 Verified Incident Dossier</h3>
+              <span class="badge-priority code-red" id="selectedIncidentPriority">CODE RED</span>
+            </div>
+            <button class="btn-export-docket" id="btnExportJson">
+              <span>📥 Export JSON-LD</span>
+            </button>
+          </div>
+
+          <div class="dossier-body" id="dossierContent">
+            
+            <!-- Key Incident Header -->
+            <div class="dossier-main-info">
+              <div class="dossier-id-row">
+                <span class="d-id font-mono" id="dossierId">EMERG-2026-9041</span>
+                <span class="d-timestamp font-mono" id="dossierTimestamp">2026-09-30 04:27:34 IST</span>
+              </div>
+              <h2 class="d-title" id="dossierTitle">Severe Road Collision at ESEC Junction</h2>
+              <p class="d-location" id="dossierLocation">📍 Erode Sengunthar Engineering College (ESEC), Perundurai Rd, Thindal, Erode (11.2742° N, 77.5826° E)</p>
+            </div>
+
+            <!-- 5 Rapid Incident Photos Gallery with AI Bounding Boxes -->
+            <div class="dossier-photos-section">
+              <div class="section-title-row">
+                <h4>📸 5 Auto-Captured Incident Evidence Frames</h4>
+                <div class="gallery-toggle">
+                  <button class="btn-micro-3d" id="btnDossier3dToggle" title="Switch to 3D Scene Model">🎮 3D Mode</button>
+                  <label><input type="checkbox" id="chkShowBoundingBoxes" checked> AI Boxes</label>
+                </div>
+              </div>
+              
+              <div class="evidence-main-preview" id="dossierEvidencePreview">
+                <img id="evidenceFeaturedImage" src="" alt="Main Evidence Inspection">
+                <canvas id="dossier3dCanvas" width="360" height="180" style="display:none; width:100%; height:100%;"></canvas>
+                <div class="evidence-overlay-box" id="evidenceBBoxOverlay"></div>
+                <div class="evidence-frame-meta font-mono" id="evidenceFrameMeta">Frame 1 of 5 | Captured at +0.0s</div>
+              </div>
+
+              <!-- Thumbnails to switch frames -->
+              <div class="evidence-thumbs-row" id="evidenceThumbsRow">
+                <!-- Dynamically generated 5 thumbnails -->
+              </div>
+            </div>
+
+            <!-- AI Scene Analysis & Triage Details -->
+            <div class="dossier-ai-breakdown">
+              <h4>🤖 AI Vision & Threat Diagnostics</h4>
+              <div class="ai-metrics-grid">
+                <div class="ai-metric-item">
+                  <span class="metric-key">Primary Classification</span>
+                  <span class="metric-val highlight" id="aiDossierClass">Vehicle Collision</span>
+                </div>
+                <div class="ai-metric-item">
+                  <span class="metric-key">Model Confidence</span>
+                  <span class="metric-val font-mono" id="aiDossierConfidence">96.4%</span>
+                </div>
+                <div class="ai-metric-item">
+                  <span class="metric-key">Victim Triage Count</span>
+                  <span class="metric-val" id="aiDossierVictims">2 Trapped / Injured</span>
+                </div>
+                <div class="ai-metric-item">
+                  <span class="metric-key">Hazard Warnings</span>
+                  <span class="metric-val warning-text" id="aiDossierHazards">Fuel Leakage Detected</span>
+                </div>
+              </div>
+
+              <div class="ai-observations-box">
+                <p><strong>System Note:</strong> Frontal impact observed between hatchback and heavy vehicle. Airbags deployed. Significant debris blocking northern lane. Automatic traffic divert requested.</p>
+              </div>
+
+              <!-- Live Audio Telemetry Stream from Citizen Mobile -->
+              <div class="dossier-audio-box" id="dossierMicBanner">
+                <div class="dossier-audio-header">
+                  <h4>🎙️ Live Ambient Citizen Audio Stream</h4>
+                  <span class="audio-live-pill font-mono" id="micStreamStatusText">STREAMING • LIVE MIC</span>
+                </div>
+                <div class="dossier-audio-metrics font-mono">
+                  <span>Noise Level: <strong id="dossierMicDecibelBadge">68 dB (Distress Detected)</strong></span>
+                  <span>Codec: <strong>44.1 kHz PCM • 64 kbps</strong></span>
+                </div>
+                <canvas id="dossierMicWaveformCanvas" class="dossier-waveform-canvas" width="320" height="36"></canvas>
+              </div>
+            </div>
+
+            <!-- Smart Routing & Multi-Agency Dispatch Assignment -->
+            <div class="dossier-dispatch-actions">
+              <h4>📡 Multi-Agency Dispatch Status</h4>
+              <div class="agency-routing-cards">
+                <div class="agency-card medical active">
+                  <div class="agency-top">
+                    <span>🚑 108 Emergency Medical</span>
+                    <span class="status-chip dispatched">EN ROUTE</span>
+                  </div>
+                  <div class="agency-details">
+                    <span>Assigned: <strong>Ambulance BL-04</strong> (Apollo Trauma)</span>
+                    <span class="font-mono">ETA: 3m 40s</span>
+                  </div>
+                </div>
+
+                <div class="agency-card police active">
+                  <div class="agency-top">
+                    <span>🚓 Highway Police Patrol</span>
+                    <span class="status-chip dispatched">EN ROUTE</span>
+                  </div>
+                  <div class="agency-details">
+                    <span>Assigned: <strong>Patrol Car PB-12</strong></span>
+                    <span class="font-mono">ETA: 2m 10s</span>
+                  </div>
+                </div>
+
+                <div class="agency-card fire">
+                  <div class="agency-top">
+                    <span>🚒 Fire & Rescue Service</span>
+                    <span class="status-chip standby">STANDBY READY</span>
+                  </div>
+                  <div class="agency-details">
+                    <span>Station: <strong>Station 03 Tender</strong></span>
+                    <button class="btn-micro-dispatch" id="btnDispatchFire">Dispatch Now (Fuel Alert)</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="dispatch-command-buttons">
+                <button class="btn-command-action green" id="btnAcknowledgeIncident">
+                  <span>✓ Mark Under Coordination</span>
+                </button>
+                <button class="btn-command-action red" id="btnEscalateIncident">
+                  <span>🚨 Escalate to Disaster Cell</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 3: RESPONDER VEHICLE INTERFACE (AMBULANCE / PATROL)  -->
+    <!-- ======================================================== -->
+    <section class="view-panel" id="viewResponder" style="display:none;">
+      <div class="responder-hud-layout">
+        
+        <!-- Top Status HUD -->
+        <div class="responder-top-bar">
+          <div class="vehicle-identity">
+            <span class="vehicle-icon">🚑</span>
+            <div class="vehicle-title">
+              <h2>Ambulance Unit BL-04</h2>
+              <span>Apollo Hospital Trauma Life Support</span>
+            </div>
+          </div>
+
+          <div class="responder-mission-badge">
+            <span class="pulse-beacon"></span>
+            <span class="mission-text">ACTIVE PRIORITY DISPATCH: INCIDENT #9041</span>
+          </div>
+
+          <div class="responder-clock font-mono" id="responderLiveClock">04:27:34</div>
+        </div>
+
+        <!-- Main Responder Screen Split -->
+        <div class="responder-main-grid">
+          
+          <!-- Left: Turn-by-Turn GPS Navigation HUD -->
+          <div class="nav-hud-card">
+            <div class="nav-direction-banner">
+              <div class="nav-turn-icon">↱</div>
+              <div class="nav-instruction">
+                <span class="turn-distance font-mono">In 350 meters</span>
+                <span class="turn-street" id="navTurnStreet">Take right toward Emergency Incident</span>
+              </div>
+            </div>
+
+            <!-- Real Interactive Driving Navigation Map View -->
+            <div class="simulated-drive-map">
+              <div id="realResponderNavMap" class="real-leaflet-map"></div>
+              <div class="nav-telemetry-overlay">
+                <div class="speedometer">
+                  <span class="speed-num font-mono">68</span>
+                  <span class="speed-unit">KM/H</span>
+                </div>
+                <div class="destination-eta">
+                  <span class="eta-big font-mono" id="vehicleEtaCountdown">03:22</span>
+                  <span class="eta-label">ESTIMATED ARRIVAL</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Quick Driver Status Action Buttons -->
+            <div class="responder-status-triggers">
+              <button class="btn-status-trigger active" id="btnStatusEnRoute">
+                <span>🚨 En Route (Siren Active)</span>
+              </button>
+              <button class="btn-status-trigger" id="btnStatusOnScene">
+                <span>📍 Arrived On Scene</span>
+              </button>
+              <button class="btn-status-trigger" id="btnStatusPatientSecured">
+                <span>🏥 Patient Secured / In Transit</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Patient & Triage Scene Briefing -->
+          <div class="briefing-card">
+            <div class="briefing-header">
+              <h3>🚨 Critical Incident Telemetry</h3>
+              <span class="priority-tag code-red">SEVERE CRASH</span>
+            </div>
+
+            <!-- AI Verified Summary for Paramedics -->
+            <div class="paramedic-brief-box">
+              <h4>AI Scene Diagnostic Summary</h4>
+              <p>Two-vehicle collision with severe cabin intrusion. Two adult occupants suspected unconscious. Potential spinal injury caution. Airbags deployed. Slight engine smoke observed.</p>
+            </div>
+
+            <!-- Quick Photos Reel for Responders -->
+            <div class="responder-evidence-reel">
+              <h4>Live Scene Photos (Captured via Citizen SOS)</h4>
+              <div class="reel-strip" id="responderReelStrip">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+            <!-- Pre-Arrival Hospital Triage Protocol -->
+            <div class="triage-prep-box">
+              <h4>Recommended Trauma Kit Preparation:</h4>
+              <div class="kit-items">
+                <span class="kit-pill">✓ Cervical Collars & Spine Board</span>
+                <span class="kit-pill">✓ Hydraulic Extrication Scissors</span>
+                <span class="kit-pill">✓ Oxygen / Bag Valve Mask (High Flow)</span>
+                <span class="kit-pill">✓ Trauma IV Normal Saline Ready</span>
+              </div>
+            </div>
+
+            <div class="responder-audio-comms">
+              <button class="btn-voice-channel" id="btnVoiceRadio">
+                <span>🎙️ Push to Talk — Radio Dispatch</span>
+              </button>
+              <button class="btn-tts-readout" id="btnTtsReadout">
+                <span>🔊 AI Audio Briefing (Hands-Free)</span>
+              </button>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- VIEW 4: 3D WORKFLOW & ARCHITECTURE (PPT / JUDGE SLIDE)    -->
+    <!-- ======================================================== -->
+    <section class="view-panel" id="viewWorkflow3d" style="display:none;">
+      <div class="workflow-presentation-container">
+        
+        <!-- Presentation Slide Header -->
+        <div class="presentation-header">
+          <div class="slide-badge">PRESENTATION & JUDGE DEFENSE SLIDE</div>
+          <h2 class="slide-title">End-to-End AI Emergency Response Architecture</h2>
+          <p class="slide-summary">
+            <strong>Core One-Line Flow:</strong> 
+            <span class="flow-pill">SOS</span> → 
+            <span class="flow-pill">Auto Capture</span> → 
+            <span class="flow-pill">GPS</span> → 
+            <span class="flow-pill">AI Analysis</span> → 
+            <span class="flow-pill">Verification</span> → 
+            <span class="flow-pill">Structured Report</span> → 
+            <span class="flow-pill">Smart Routing</span> → 
+            <span class="flow-pill">Responder Dashboard</span> → 
+            <span class="flow-pill">Response</span>
+          </p>
+
+          <div class="presentation-controls">
+            <div class="workflow-nav-btn-group">
+              <button class="btn-step-nav" id="btnWorkflowPrev" title="Previous Architectural Step">⏮️ Prev</button>
+              <span class="workflow-step-counter" id="workflowStepCounter">Step 01 / 09</span>
+              <button class="btn-step-nav" id="btnWorkflowNext" title="Next Architectural Step">Next ⏭️</button>
+            </div>
+            <button class="btn-play-flow" id="btnPlay3dFlow">
+              <span id="playFlowIcon">▶</span>
+              <span id="playFlowText">Auto-Play 9-Step Workflow</span>
+            </button>
+            <div class="view-mode-btn-group">
+              <button class="btn-toggle-view-mode active" id="btnMode3dBoxes">3D Isometric Boxes</button>
+              <button class="btn-toggle-view-mode" id="btnModeAscii">ASCII Architecture</button>
+              <button class="btn-toggle-view-mode" id="btnModePptExport">PPT Slides &amp; Script</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3D WORKFLOW ISOMETRIC INTERACTIVE CANVAS & CARDS -->
+        <div class="workflow-canvas-wrap" id="workflow3dCanvasWrap">
+          
+          <!-- Interactive 3D Pipeline Stages Strip -->
+          <div class="workflow-3d-nodes-strip" id="workflow3dNodesStrip">
+            <button class="wf-node active" data-step="1"><span>01</span> 🆘 SOS</button>
+            <span class="wf-node-arrow">→</span>
+            <button class="wf-node" data-step="2"><span>02</span> 📸 5-Burst</button>
+            <span class="wf-node-arrow">→</span>
+            <button class="wf-node" data-step="3"><span>03</span> 📍 GPS</button>
+            <span class="wf-node-arrow">→</span>
+            <button class="wf-node" data-step="4"><span>04</span> 🤖 AI Vision</button>
+            <span class="wf-node-arrow">→</span>
+            <button class="wf-node" data-step="5"><span>05</span> ✅ Verify</button>
+            <span class="wf-node-arrow">→</span>
+            <button class="wf-node" data-step="6"><span>06</span> 📋 Dossier</button>
+            <span class="wf-node-arrow">→</span>
+            <button class="wf-node" data-step="7"><span>07</span> 📡 Router</button>
+            <span class="wf-node-arrow">→</span>
+            <button class="wf-node" data-step="8"><span>08</span> 🚨 Command</button>
+            <span class="wf-node-arrow">→</span>
+            <button class="wf-node" data-step="9"><span>09</span> 🚑 Rescue</button>
+          </div>
+
+          <!-- Animated Packet Stream Indicator -->
+          <div class="pipeline-progress-track">
+            <div class="track-line"></div>
+            <div class="track-glow" id="trackGlow"></div>
+          </div>
+
+          <!-- 9 Interactive 3D Step Cards -->
+          <div class="steps-3d-grid" id="steps3dGrid">
+            
+            <!-- Step 1 -->
+            <div class="card-3d-step active" data-step="1" id="stepCard1">
+              <div class="step-num-badge">01</div>
+              <div class="step-icon">🆘</div>
+              <h3 class="step-title">SOS Activation</h3>
+              <p class="step-desc">Citizen taps emergency button. Instant trigger with haptic and visual confirmation.</p>
+              <div class="step-tech-tag">Web Touch / Hardware API</div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="card-3d-step" data-step="2" id="stepCard2">
+              <div class="step-num-badge">02</div>
+              <div class="step-icon">📸</div>
+              <h3 class="step-title">Auto Evidence Capture</h3>
+              <p class="step-desc">Automatically captures 5 incident photos across ~5 seconds with telemetry watermark.</p>
+              <div class="step-tech-tag">WebRTC / MediaStream Burst</div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="card-3d-step" data-step="3" id="stepCard3">
+              <div class="step-num-badge">03</div>
+              <div class="step-icon">📍</div>
+              <h3 class="step-title">Location Capture</h3>
+              <p class="step-desc">GPS latitude, longitude, altitude, accuracy radius and reverse-geocoded road landmark.</p>
+              <div class="step-tech-tag">HTML5 Geolocation + GIS</div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="card-3d-step" data-step="4" id="stepCard4">
+              <div class="step-num-badge">04</div>
+              <div class="step-icon">🤖</div>
+              <h3 class="step-title">AI Scene Analysis</h3>
+              <p class="step-desc">Multi-modal vision identifies incident type, hazards, injury count, and priority severity.</p>
+              <div class="step-tech-tag">YOLOv10 / Gemini Vision</div>
+            </div>
+
+            <!-- Step 5 -->
+            <div class="card-3d-step" data-step="5" id="stepCard5">
+              <div class="step-num-badge">05</div>
+              <div class="step-icon">✅</div>
+              <h3 class="step-title">Verification</h3>
+              <p class="step-desc">User verifies/corrects AI category with 10s auto-confirm fail-safe if unconscious.</p>
+              <div class="step-tech-tag">Human-in-the-Loop + Failsafe</div>
+            </div>
+
+            <!-- Step 6 -->
+            <div class="card-3d-step" data-step="6" id="stepCard6">
+              <div class="step-num-badge">06</div>
+              <div class="step-icon">📋</div>
+              <h3 class="step-title">Report Generation</h3>
+              <p class="step-desc">Compiles incident type, 5 burst photos, GPS coordinates, timestamp & triage level.</p>
+              <div class="step-tech-tag">EDXL-DE / JSON-LD Dossier</div>
+            </div>
+
+            <!-- Step 7 -->
+            <div class="card-3d-step" data-step="7" id="stepCard7">
+              <div class="step-num-badge">07</div>
+              <div class="step-icon">📡</div>
+              <h3 class="step-title">Smart Routing</h3>
+              <p class="step-desc">Dispatches simultaneously to nearest authorized police, medical, or fire stations.</p>
+              <div class="step-tech-tag">Geo-Spatial Nearest Unit Match</div>
+            </div>
+
+            <!-- Step 8 -->
+            <div class="card-3d-step" data-step="8" id="stepCard8">
+              <div class="step-num-badge">08</div>
+              <div class="step-icon">🚨</div>
+              <h3 class="step-title">Responder Dashboard</h3>
+              <p class="step-desc">Command center and dispatch operators review live coordinates, evidence photos, and ETA.</p>
+              <div class="step-tech-tag">Real-Time Dispatch Console</div>
+            </div>
+
+            <!-- Step 9 -->
+            <div class="card-3d-step" data-step="9" id="stepCard9">
+              <div class="step-num-badge">09</div>
+              <div class="step-icon">🚑</div>
+              <h3 class="step-title">Response Coordination</h3>
+              <p class="step-desc">Ambulance/patrol vehicle receives turn-by-turn navigation and AI scene triage for rapid rescue.</p>
+              <div class="step-tech-tag">Vehicle HUD & Field Triage</div>
+            </div>
+
+          </div>
+
+          <!-- Deep-Dive Modal Info for Selected Step -->
+          <div class="step-deep-dive-panel" id="stepDeepDivePanel">
+            <div class="deep-dive-header">
+              <div class="dd-badge" id="ddStepBadge">STEP 01 OF 09</div>
+              <h3 class="dd-title" id="ddStepTitle">1. SOS Activation Details</h3>
+            </div>
+            <div class="dd-body">
+              <p id="ddStepText">The user activates emergency mode with a single tactile touch or quick hold. Initiates background hardware wake-locks, camera priming, and GPS lock without blocking victim actions.</p>
+              <div class="dd-metrics" id="ddStepMetrics">
+                <span class="dd-tag">Latency: <strong>&lt; 50ms</strong></span>
+                <span class="dd-tag">Inputs: <strong>Touch / Voice / Physical</strong></span>
+                <span class="dd-tag">Network: <strong>Works offline via queue</strong></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ASCII ARCHITECTURE BOX VIEW (Matches PPT Judge Slide request) -->
+        <div class="workflow-ascii-wrap" id="workflowAsciiWrap" style="display:none;">
+          <div class="ascii-toolbar">
+            <span class="ascii-title">System Architecture Block Diagram (Judge Ready)</span>
+            <button class="btn-copy-ascii" id="btnCopyAscii">📋 Copy Diagram</button>
+          </div>
+          <pre class="ascii-code-block" id="asciiCodeBlock">
+┌────────────────────────────────────────────────────────────────────────┐
+│                        1. CITIZEN / VICTIM LAYER                       │
+│  Mobile Web App / Native PWA (React / PWA / Android Native Service)   │
+│                                                                        │
+│   [ 🆘 1-Touch SOS ] ───► [ 📸 5-Frame Burst ] ───► [ 📍 GPS Lock ]    │
+│   Single tactile tap       1 photo/sec for 5s        ±4m Accuracy      │
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                        2. EDGE / CLOUD AI ENGINE                       │
+│                                                                        │
+│   [ 🤖 Multi-Modal Scene Analysis ] (YOLOv10 / Gemini 2.5 Flash Vision)│
+│   • Object Detection: Damaged Vehicles, Fire, Smoke, Victims, Plates   │
+│   • Severity Scoring: Code Red (Critical) / Amber / Yellow             │
+│   • Auto-Hazard Diagnostics: Fuel Leakage, Structural Risk             │
+│                                   │                                    │
+│   [ ✅ Verification Layer ] ◄─────┘                                    │
+│   • "Possible Collision Detected. Confirm?" (1-tap override)           │
+│   • 10s Fail-Safe Auto-Confirm (if victim is incapacitated/unconscious)│
+└───────────────────────────────────┬────────────────────────────────────┘
+                                    │
+                                    ▼
+┌────────────────────────────────────────────────────────────────────────┐
+│                    3. REPORT GENERATION & SMART ROUTING                │
+│                                                                        │
+│   [ 📋 Structured Incident Dossier ]                                   │
+│   • JSON-LD / EDXL-DE Format (UUID, Time, 5 Images, GPS, Triage)       │
+│                                   │                                    │
+│   [ 📡 Multi-Agency Smart Router ] ────────────────┐                   │
+│   • Geo-Spatial Matching to Closest Available Units│                   │
+└───────────────────┬────────────────────────────────┼───────────────────┘
+                    │                                │
+                    ▼                                ▼
+┌──────────────────────────────────────┐  ┌──────────────────────────────┐
+│  4. COMMAND CENTER DASHBOARD (HQ)    │  │ 5. RESPONDER VEHICLE HUD     │
+│  • Live Interactive GIS Tactical Map │  │ • Tablet HUD (Ambulance/Cop) │
+│  • 5-Frame Zoom & AI Bounding Boxes  │  │ • Turn-by-Turn GPS Nav Route │
+│  • Multi-Agency Dispatch Oversight   │  │ • Pre-Arrival Medical Triage │
+│  • Direct Radio & Broadcast Channel  │  │ • 1-Tap Arrival Confirmation │
+└──────────────────────────────────────┘  └──────────────────────────────┘
+          </pre>
+        </div>
+
+        <!-- PPT SLIDES & SCRIPT TAB -->
+        <div class="workflow-ppt-wrap" id="workflowPptWrap" style="display:none;">
+          <div class="ppt-grid">
+            
+            <div class="ppt-card">
+              <span class="slide-num">SLIDE 1</span>
+              <h3>Problem Statement</h3>
+              <p class="slide-point"><strong>Current Emergency Challenges:</strong></p>
+              <ul>
+                <li>Victims of severe accidents are often in shock, panicked, or unconscious, unable to speak or give coordinates over voice calls.</li>
+                <li>Emergency dispatchers waste 3-5 critical minutes ("Golden Hour") asking "Where are you? What kind of fire? How many injured?".</li>
+                <li>Wrong responder types are frequently dispatched (e.g. fire truck sent when heavy rescue extrication gear was needed).</li>
+              </ul>
+            </div>
+
+            <div class="ppt-card">
+              <span class="slide-num">SLIDE 2</span>
+              <h3>Proposed Solution</h3>
+              <p class="slide-point"><strong>SOSync AI Architecture:</strong></p>
+              <ul>
+                <li><strong>Zero-Friction Trigger:</strong> 1-touch SOS initiates autonomous capture without blocking the user.</li>
+                <li><strong>Multi-Frame Evidence:</strong> 5 rapid burst photos over ~5 seconds document vehicle angles, injuries, and fire progression.</li>
+                <li><strong>AI Scene Intelligence:</strong> Multi-modal vision identifies crash severity, victim count, and hazardous leaks in under 500ms.</li>
+                <li><strong>Fail-Safe Verification:</strong> Allows 1-tap confirmation or 10-second automatic dispatch if victim passes out.</li>
+              </ul>
+            </div>
+
+            <div class="ppt-card">
+              <span class="slide-num">SLIDE 3</span>
+              <h3>Smart Routing & Multi-Agency Dispatch</h3>
+              <p class="slide-point"><strong>Unified Response Orchestration:</strong></p>
+              <ul>
+                <li>Routes structured dossiers simultaneously to 108 (Ambulance), 100 (Police), and 101 (Fire & Rescue).</li>
+                <li>Provides responders with turn-by-turn navigation, scene photographs, and pre-arrival triage equipment recommendations.</li>
+                <li>Saves an estimated 4 to 6 minutes in critical response time during the trauma golden hour.</li>
+              </ul>
+            </div>
+
+            <div class="ppt-card">
+              <span class="slide-num">SLIDE 4</span>
+              <h3>Judge Q&A Defense Key Points</h3>
+              <p class="slide-point"><strong>Anticipated Questions & Winning Answers:</strong></p>
+              <ul>
+                <li><strong>Q: What if there is no internet in the accident zone?</strong><br>
+                <em>A: SOSync includes an SMS / USSD / LoRa fall-back compression packet that encodes GPS coordinates and AI category into a 140-character encrypted SMS string.</em></li>
+                <li><strong>Q: What if the AI misidentifies the incident?</strong><br>
+                <em>A: The 5 raw photos and GPS are always attached unedited; responders always inspect raw visual ground truth. Human verification has 1-tap override.</em></li>
+                <li><strong>Q: What if the victim is unconscious?</strong><br>
+                <em>A: The 10-second fail-safe timer automatically dispatches the report if no touch is detected, preventing delays.</em></li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- 3D Model Hologram Inspector Modal -->
+  <div class="model-modal-backdrop" id="modelModalBackdrop" aria-hidden="true">
+    <div class="model-modal-container">
+      <div class="model-modal-header">
+        <div class="model-modal-title-row">
+          <span class="badge-live">3D SCENARIO TWIN</span>
+          <h3 id="modalModelTitle">3D Highway Collision Simulation</h3>
+        </div>
+        <button class="model-modal-close" id="closeModelModalBtn" aria-label="Close 3D Inspector">✕</button>
+      </div>
+
+      <div class="model-modal-body">
+        <div class="model-3d-stage-viewport">
+          <div class="model-3d-diorama" id="modalModelDiorama">
+            <img src="assets/models/model-accident.jpg" alt="Active 3D Scenario" id="modalModelImg">
+            <div class="model-3d-grid-floor"></div>
+            <div class="model-3d-scanline"></div>
+          </div>
+          <div class="model-stage-controls">
+            <button class="stage-ctrl-btn" id="btnRotateModelLeft" title="Rotate Counter-Clockwise">↺ Rotate</button>
+            <button class="stage-ctrl-btn" id="btnResetModelOrbit" title="Reset View">⌖ Center</button>
+            <button class="stage-ctrl-btn" id="btnRotateModelRight" title="Rotate Clockwise">Rotate ↻</button>
+          </div>
+        </div>
+
+        <div class="model-modal-details">
+          <div class="model-meta-item">
+            <span class="meta-label">AI Incident Classification</span>
+            <strong id="modalModelCategory">Highway Collision (Code 3)</strong>
+          </div>
+          <div class="model-meta-item">
+            <span class="meta-label">Computer Vision Confidence</span>
+            <strong class="highlight-green" id="modalModelConfidence">98.7% Accuracy</strong>
+          </div>
+          <div class="model-meta-item">
+            <span class="meta-label">Target Dispatch Units</span>
+            <span id="modalModelUnits">2x Heavy Rescue, 1x ALS Ambulance</span>
+          </div>
+          <div class="model-meta-item">
+            <span class="meta-label">Estimated Extrication Triage</span>
+            <span id="modalModelTriage">&lt; 3.5 Minutes Priority Window</span>
+          </div>
+          <button class="btn-primary-action btn-modal-select" id="btnApplyScenarioFromModal">
+            <span>⚡ Load Scenario into Live Simulation</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Real-Time 24-Hour Digital Clock Engine -->
+  <script>
+    (function startLiveClockEngine() {
+      function tickLiveClock() {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, '0');
+        const mm = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+        const fullTime24 = hh + ':' + mm + ':' + ss;
+        const shortTime24 = hh + ':' + mm;
+
+        const yyyy = now.getFullYear();
+        const mon = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        const dateStr = yyyy + '-' + mon + '-' + dd;
+
+        const clockLive = document.getElementById('liveClock');
+        if (clockLive) clockLive.textContent = fullTime24;
+
+        const clockMobile = document.getElementById('mobileClock');
+        if (clockMobile) clockMobile.textContent = shortTime24;
+
+        const clockResp = document.getElementById('responderLiveClock');
+        if (clockResp) clockResp.textContent = fullTime24;
+
+        const clockHud = document.getElementById('hudTimeText');
+        if (clockHud) clockHud.textContent = dateStr + ' ' + fullTime24;
+
+        const clockDossier = document.getElementById('dossierTimestamp');
+        if (clockDossier) clockDossier.textContent = dateStr + ' ' + fullTime24 + ' IST';
+      }
+
+      // Tick immediately on load
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', tickLiveClock);
+      } else {
+        tickLiveClock();
+      }
+
+      // Run every 500ms for continuous precision
+      setInterval(tickLiveClock, 500);
+    })();
+  </script>
+
+  <!-- JavaScript Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
