@@ -6,6 +6,12 @@ A fast, reliable emergency-reporting platform that addresses communication delay
 
 ---
 
+## 🌐 24/7 Live Deployment
+
+👉 **Live Demo:** [https://yuvarajit007.github.io/sosync/](https://yuvarajit007.github.io/sosync/)
+
+---
+
 ## 🚀 Quick Start Instructions
 
 You can run the application directly in your browser:
